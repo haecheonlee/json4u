@@ -9,9 +9,12 @@ import {
 import { rootMarker } from "@/lib/idgen/pointer";
 import { getChildrenKeys, hasChildren } from "@/lib/parser/node";
 import { cn } from "@/lib/utils";
+import { useStatusStore } from "@/stores/statusStore";
 import { useTree } from "@/stores/treeStore";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
+import clsx from "clsx";
 import { filter } from "lodash-es";
+import { useShallow } from "zustand/react/shallow";
 import { SourceHandle, TargetHandle } from "./Handle";
 import Toolbar from "./Toolbar";
 
@@ -20,6 +23,11 @@ export const ObjectNode = memo(({ id, data }: NodeProps<NodeWithData>) => {
   const tree = useTree();
   const node = tree.node(id);
   const flowNode = getNode(id) as NodeWithData | undefined;
+  const { unfoldNodeMap } = useStatusStore(
+    useShallow((state) => ({
+      unfoldNodeMap: state.unfoldNodeMap,
+    })),
+  );
 
   if (!node || !flowNode) {
     return null;
@@ -32,7 +40,7 @@ export const ObjectNode = memo(({ id, data }: NodeProps<NodeWithData>) => {
   return (
     <>
       {data.toolbarVisible && <Toolbar id={id} />}
-      <div className="nodrag nopan graph-node cursor-default" style={data.style}>
+      <div className={clsx("nodrag nopan graph-node cursor-default", { "opacity-50": !!unfoldNodeMap[id] })}>
         {node.id !== rootMarker && <TargetHandle childrenNum={childrenNum} />}
         {kvStart > 0 && <div style={{ width, height: kvStart * globalStyle.kvHeight }} />}
         {filter(
